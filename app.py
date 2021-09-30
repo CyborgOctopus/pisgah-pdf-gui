@@ -11,6 +11,7 @@ class App(QWidget):
         self.init_ui()
 
     # Initializes the program user interface. Inspiration from here: https://zetcode.com/gui/pyqt5/
+    # TODO: Refactor into multiple functions
     def init_ui(self):
         # Set window properties
         self.setWindowTitle('Pisgah PDF File Comparison')
