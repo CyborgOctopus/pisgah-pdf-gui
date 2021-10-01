@@ -38,6 +38,7 @@ class App(QWidget):
         textbox = QLineEdit()
         #textbox.setGeometry(100, 100, 300, 20)
         textbox.setPlaceholderText('Enter name of output file (default: \'comparison\')')
+        textbox.setObjectName('textbox')
 
         # Create submission button
         submit = QPushButton('Submit')
@@ -57,10 +58,13 @@ class App(QWidget):
         self.show()
 
     # Opens a QFileDialog and stores the user-selected filename in the filenames list at the specified index
-    def get_file(self, index):
-        self.input_filenames[index] = QFileDialog.getOpenFileName(self, filter='*.pdf')[0]
+    def get_file(self, index_to_store):
+        self.input_filenames[index_to_store] = QFileDialog.getOpenFileName(self, filter='*.pdf')[0]
         print(self.input_filenames)
 
     # Runs the output file generator in 'pisgah_pdf.py'
     def generate_outfile(self):
+        output_filename = self.findChild(QLineEdit, 'textbox').text()
+        if output_filename:
+            self.output_filename = output_filename
         pisgah_pdf.main(*self.input_filenames, self.output_filename)
