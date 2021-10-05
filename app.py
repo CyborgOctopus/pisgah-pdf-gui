@@ -1,70 +1,57 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QFileDialog
+import PyQt5.QtWidgets as qtw
 import pisgah_pdf
+from button import Button
 
 
 # The main class for the Pisgah PDF GUI program
-class App(QWidget):
+class App(qtw.QWidget):
     def __init__(self):
         super().__init__()
-        self.input_filenames = [''] * 2
         self.output_filename = 'comparison'
         self.init_ui()
 
     # Initializes the program user interface. Inspiration from here: https://zetcode.com/gui/pyqt5/
-    # TODO: Refactor into multiple functions
     def init_ui(self):
         # Set window properties
         self.setWindowTitle('Pisgah PDF File Comparison')
+        self.setFixedSize(750, 650)
 
-        # Create buttons
-        button_1 = QPushButton('Drag and drop first file or click to select')
-        button_1.setFixedSize(300, 300)
-        button_1.setAcceptDrops(True)
-        button_1.clicked.connect(lambda: self.get_file(0))
-        button_2 = QPushButton('Drag and drop second file or click to select')
-        button_2.setFixedSize(300, 300)
-        button_2.setAcceptDrops(True)
-        button_2.clicked.connect(lambda: self.get_file(1))
+        # Create UI elements
+        self.create_buttons()
+        self.create_textbox()
+        self.create_submit_button()
 
-        # Create horizontal layout to store buttons
-        hbox = QHBoxLayout()
-        hbox.addSpacing(50)
-        hbox.addWidget(button_1)
-        hbox.addSpacing(50)
-        hbox.addWidget(button_2)
-        hbox.addSpacing(50)
+        # Display
+        self.show()
 
-        # Create textbox to enter output filename
-        textbox = QLineEdit()
-        #textbox.setGeometry(100, 100, 300, 20)
+    # Create buttons
+    def create_buttons(self):
+        button1 = Button('Drag and drop first file or click to select', self)
+        button1.setGeometry(50, 50, 300, 300)
+        button1.setObjectName('button1')
+        button2 = Button('Drag and drop second file or click to select', self)
+        button2.setGeometry(400, 50, 300, 300)
+        button2.setObjectName('button2')
+
+    # Create textbox to enter output filename
+    def create_textbox(self):
+        textbox = qtw.QLineEdit(self)
+        textbox.setGeometry(50, 400, 650, 40)
         textbox.setPlaceholderText('Enter name of output file (default: \'comparison\')')
         textbox.setObjectName('textbox')
 
-        # Create submission button
-        submit = QPushButton('Submit')
+    # Create submission button
+    def create_submit_button(self):
+        submit = qtw.QPushButton('Submit', self)
+        submit.setGeometry(50, 500, 650, 100)
+        submit.setObjectName('submit')
         submit.clicked.connect(self.generate_outfile)
-
-        # Create vertical layout to hold all elements
-        vbox = QVBoxLayout()
-        vbox.addSpacing(50)
-        vbox.addLayout(hbox)
-        vbox.addSpacing(50)
-        vbox.addWidget(textbox)
-        vbox.addSpacing(50)
-        vbox.addWidget(submit)
-        vbox.addSpacing(50)
-
-        self.setLayout(vbox)
-        self.show()
-
-    # Opens a QFileDialog and stores the user-selected filename in the filenames list at the specified index
-    def get_file(self, index_to_store):
-        self.input_filenames[index_to_store] = QFileDialog.getOpenFileName(self, filter='*.pdf')[0]
-        print(self.input_filenames)
 
     # Runs the output file generator in 'pisgah_pdf.py'
     def generate_outfile(self):
-        output_filename = self.findChild(QLineEdit, 'textbox').text()
+        input_filename_1 = self.findChild(Button, 'button1').filename
+        input_filename_2 = self.findChild(Button, 'button2').filename
+        output_filename = self.findChild(qtw.QLineEdit, 'textbox').text()
         if output_filename:
             self.output_filename = output_filename
-        pisgah_pdf.main(*self.input_filenames, self.output_filename)
+        pisgah_pdf.main(input_filename_1, input_filename_2, self.output_filename)
