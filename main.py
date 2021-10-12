@@ -1,13 +1,11 @@
 import sys
-import PyQt5
-#from PyQt5.QtGui import
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QFileDialog
-from app import App
+from PyQt5.QtWidgets import QApplication
+from pisgah_gui import PisgahGui
 
 
 def main():
     app = QApplication([])
-    pisgah_app = App()
+    gui = PisgahGui()
     sys.exit(app.exec_())
 
 

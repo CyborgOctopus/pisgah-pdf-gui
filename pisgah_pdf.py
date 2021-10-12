@@ -20,15 +20,13 @@ from datetime import datetime
 def get_lexis_case_numbers(doc):
     lexis_case_number_list = []
 
-    for page_number in range(0,doc.pageCount):
-        print ("Page " + str(page_number+1))
+    for page_number in range(0, doc.pageCount):
         page = doc.loadPage(page_number)
         page_text = page.getText("text")
         keyword = "Case Number:"
         case_number_split = page_text.split(keyword)
         for case_number_plus in case_number_split[1:]:
             case_number = case_number_plus.split("\n") # case number between newlines
-            print (keyword + " " + case_number[1]) # [0] and [2] are "" where old "\n"s were
             lexis_case_number_list.append(case_number[1])
 
     return lexis_case_number_list
@@ -38,30 +36,28 @@ def get_lexis_case_numbers(doc):
 
 # CIPRS PDF parsing
 def get_ciprs_case_numbers(doc):
-    CIPRS_case_number_list = []
+    ciprs_case_number_list = []
 
     for page_number in range(0,doc.pageCount):
-        print ("Page " + str(page_number+1))
         page = doc.loadPage(page_number)
         page_text = page.getText("text")
         keyword = "Court Case:"
         case_number_split = page_text.split(keyword)
         for case_number_plus in case_number_split[1:]:
             case_number = case_number_plus.split("\n")[0].strip() # case number btwn space and newline
-            print (keyword + " " + case_number)
-            CIPRS_case_number_list.append(case_number)
-    return CIPRS_case_number_list
+            ciprs_case_number_list.append(case_number)
+    return ciprs_case_number_list
 
 
 # compare the case numbers based on last 6 digits
-def get_lexis_cases_not_in_ciprs(lexis_case_number_list, CIPRS_case_number_list):
+def get_lexis_cases_not_in_ciprs(lexis_case_number_list, ciprs_case_number_list):
     lexis_cases_not_found = []
     lexis_cases_six_digits_not_found = []
     for lexis_case_number in lexis_case_number_list:
         lexis_case_six_digit = lexis_case_number[-6:]
         found_match = False
-        for CIPRS_case_number in CIPRS_case_number_list:
-            if lexis_case_six_digit == CIPRS_case_number[-6:]:
+        for ciprs_case_number in ciprs_case_number_list:
+            if lexis_case_six_digit == ciprs_case_number[-6:]:
                 found_match = True
         if found_match == False:
             # only report if new case number (based on last-6-digits)
@@ -70,25 +66,19 @@ def get_lexis_cases_not_in_ciprs(lexis_case_number_list, CIPRS_case_number_list)
                 # only report if new case number (full case number)
                 if lexis_case_number not in lexis_cases_not_found:
                     lexis_cases_not_found.append(lexis_case_number)
-    print(lexis_cases_not_found)
     return lexis_cases_not_found
 
 
 # write the case numbers found in Lexis but not in CIPRS
-def main(lexis_filepath, ciprs_filepath, out_file_name):
-    lexis_doc = fitz.open(lexis_filepath)
-    ciprs_doc = fitz.open(ciprs_filepath)
-    print('done')
+def file_comparison(lexis_file_path, ciprs_file_path, out_file_path):
+    lexis_doc = fitz.open(lexis_file_path)
+    ciprs_doc = fitz.open(ciprs_file_path)
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     lexis_case_numbers = get_lexis_case_numbers(lexis_doc)
     ciprs_case_numbers = get_ciprs_case_numbers(ciprs_doc)
     lexis_not_in_ciprs = get_lexis_cases_not_in_ciprs(lexis_case_numbers, ciprs_case_numbers)
-    print('done!')
-    with open(out_file_name + '.txt', 'w') as f:
-        print('start')
-        f.write("Comparing " + lexis_filepath + " and " + ciprs_filepath + " on " + dt_string + "\n")
-        print('wrote time')
+    with open(out_file_path, 'w') as f:
+        f.write("Comparing " + lexis_file_path + " and " + ciprs_file_path + " on " + dt_string + "\n")
         for lexis_case_number in lexis_not_in_ciprs:
             f.write("Lexis case " + lexis_case_number + " not in CIPRS\n")
-        print('end')
