@@ -25,7 +25,7 @@ class Button(QPushButton):
 
     # Sets the message for when a file is selected
     def set_file_selected_message(self):
-        self.setText(os.path.split(self.file_path)[1] + ' has been selected')
+        self.setText(os.path.basename(self.file_path) + ' has been selected')
 
     def dragEnterEvent(self, e):
         paths = e.mimeData().urls()

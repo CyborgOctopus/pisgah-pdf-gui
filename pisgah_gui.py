@@ -1,7 +1,9 @@
 import os
+from PyQt5.QtCore import QSettings
 import PyQt5.QtWidgets as qtw
 from pisgah_pdf import file_comparison
 from button import Button
+from output_file_exists_dialog import OutputFileExistsDialog
 
 
 # The main class for the Pisgah PDF GUI program
@@ -10,9 +12,11 @@ class PisgahGui(qtw.QWidget):
         super().__init__()
         self.input_file_path_lexis = ''
         self.input_file_path_ciprs = ''
-        self.output_file_path = 'comparison.txt'
+        self.default_output_file_path = os.path.join(self.read_settings(), 'comparison')
+        self.output_file_path = self.default_output_file_path
         self.output_file_display = qtw.QTextEdit()
         self.output_file_display.resize(1000, 500)
+        self.dynamic_font = self.font()
         self.init_ui()
 
     # Initializes the program user interface. Inspiration from here: https://zetcode.com/gui/pyqt5/
@@ -26,6 +30,7 @@ class PisgahGui(qtw.QWidget):
         self.create_buttons()
         self.create_textbox()
         self.create_submit_button()
+        self.create_config_button()
 
         # Display
         self.show()
@@ -51,19 +56,30 @@ class PisgahGui(qtw.QWidget):
         submit = qtw.QPushButton('Submit', self)
         submit.setObjectName('submit')
         submit.setEnabled(False)
-        submit.clicked.connect(self.generate_outfile)
+        submit.clicked.connect(self.on_submit)
+
+    # Create configuration button
+    def create_config_button(self):
+        config = qtw.QPushButton('Choose where to save output files by default', self)
+        config.setObjectName('config')
+        config.clicked.connect(self.write_settings)
 
     # Dynamically adjusts the size of all window elements as the window is resized
     def resizeEvent(self, event):
+        self.resize_font()
         self.resize_buttons()
         self.resize_textbox()
         self.resize_submit_button()
+        self.resize_config_button()
 
     # Resize buttons based on the current size of the window
     def resize_buttons(self):
         button1 = self.findChild(Button, 'button1')
         button1.setGeometry(50, 50, (self.width() - 150) / 2, self.height() * 300 / 650)
-        self.findChild(Button, 'button2').setGeometry(100 + button1.width(), 50, button1.width(), button1.height())
+        button1.setFont(self.dynamic_font)
+        button2 = self.findChild(Button, 'button2')
+        button2.setGeometry(100 + button1.width(), 50, button1.width(), button1.height())
+        button2.setFont(self.dynamic_font)
 
     # Resize textbox based on the current size of the window and other elements
     def resize_textbox(self):
@@ -76,6 +92,19 @@ class PisgahGui(qtw.QWidget):
         top_height = textbox.y() + textbox.height() + 50
         submit = self.findChild(qtw.QPushButton, 'submit')
         submit.setGeometry(50, top_height, self.width() - 100, self.height() - top_height - 50)
+        submit.setFont(self.dynamic_font)
+
+    # Resizes the config button based on the current size of the window and other elements
+    def resize_config_button(self):
+        submit = self.findChild(qtw.QPushButton, 'submit')
+        top_height = submit.y() + submit.height() + 50
+        config = self.findChild(qtw.QPushButton, 'config')
+        #config.setGeometry(50, top_height, self.width() - 100, self.height() - top_height - 50)
+        config.setFont(self.dynamic_font)
+
+    # Resizes font for all elements that use dynamic font
+    def resize_font(self):
+        self.dynamic_font.setPointSizeF(self.width() * 8 / 750)
 
     def on_selection(self):
         self.input_file_path_lexis = self.findChild(Button, 'button1').file_path
@@ -83,14 +112,43 @@ class PisgahGui(qtw.QWidget):
         if self.input_file_path_lexis and self.input_file_path_ciprs:
             self.findChild(qtw.QPushButton, 'submit').setEnabled(True)
 
-    # Runs the output file generator in 'pisgah_pdf.py'
-    def generate_outfile(self):
+    # Checks to see if the specified output file already exists. If so, creates a dialog prompting the user about what
+    # to do. Otherwise initiates generation of the output file.
+    def on_submit(self):
         output_file_path = self.findChild(qtw.QLineEdit, 'textbox').text()
         if output_file_path:
-            self.output_file_path = output_file_path + '.txt'
+            self.output_file_path = output_file_path
+        else:
+            self.output_file_path = self.default_output_file_path
+        while os.path.exists(self.output_file_path + '.txt'):
+            dialog = OutputFileExistsDialog(self)
+            result = dialog.exec()
+            if result == 0:
+                return
+            elif result == 1:
+                break
+            elif result == 2:
+                self.output_file_path = dialog.path
+        self.generate_outfile()
+
+    # Runs the output file generator in 'pisgah_pdf.py'
+    def generate_outfile(self):
         if os.path.exists(self.input_file_path_lexis) and os.path.exists(self.input_file_path_ciprs):
-            file_comparison(self.input_file_path_lexis, self.input_file_path_ciprs, self.output_file_path)
-            comparison_text = open(self.output_file_path).read()
+            file_comparison(self.input_file_path_lexis, self.input_file_path_ciprs, self.output_file_path + '.txt')
+            comparison_text = open(self.output_file_path + '.txt').read()
             self.output_file_display.setWindowTitle(os.path.split(self.output_file_path)[1])
             self.output_file_display.setPlainText(comparison_text)
             self.output_file_display.show()
+
+    # Reads settings from the settings object
+    def read_settings(self):
+        return QSettings('CyborgOctopus', 'Pisgah Legal Services PDF GUI').value('dir')
+
+    # Creates and saves default save directory settings
+    def write_settings(self):
+        dir_selector = qtw.QFileDialog(self)
+        #dir_selector.setOption(Sh)
+        directory = dir_selector.getExistingDirectory(self)
+
+        settings = QSettings('CyborgOctopus', 'Pisgah Legal Services PDF GUI')
+        settings.setValue('dir', directory)
