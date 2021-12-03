@@ -6,8 +6,9 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, QLabel, QPushButton, QVBoxLayout
 class OutputFileExistsDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
-        self.output_file_path = parent.output_file_path
-        self.path = self.get_default_path()
+        self.output_file_dir = parent.output_file_dir
+        self.path = parent.output_file_path
+        self.get_path()
         self.setWindowModality(2)
         self.setLayout(QVBoxLayout())
         self.init_ui()
@@ -57,18 +58,19 @@ class OutputFileExistsDialog(QDialog):
         #textbox.setGeometry(10, 10, 100, 100)
 
     def on_rename_clicked(self):
-        self.get_new_path()
+        self.get_path_from_user_input()
         self.done(2)
 
-    def get_new_path(self):
-        path = self.findChild(QLineEdit, 'textbox').text()
-        if path:
-            self.path = path
+    def get_path_from_user_input(self):
+        file_name = self.findChild(QLineEdit, 'textbox').text()
+        if file_name:
+            self.path = os.path.join(self.output_file_dir, file_name)
 
-    def get_default_path(self):
+    def get_path(self):
         i = 1
         while True:
-            new_path = self.output_file_path + ' (' + str(i) + ')'
-            if not os.path.exists(new_path + '.txt'):
-                return new_path
+            path = self.path + ' (' + str(i) + ')'
+            if not os.path.exists(path + '.txt'):
+                self.path = path
+                return
             i += 1

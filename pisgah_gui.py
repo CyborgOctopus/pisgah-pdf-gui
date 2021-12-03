@@ -12,8 +12,11 @@ class PisgahGui(qtw.QWidget):
         super().__init__()
         self.input_file_path_lexis = ''
         self.input_file_path_ciprs = ''
-        self.default_output_file_path = os.path.join(self.read_settings(), 'comparison')
-        self.output_file_path = self.default_output_file_path
+        self.output_file_dir = ''
+        self.output_file_path = ''
+        self.default_output_file_name = 'comparison'
+        self.default_output_file_path = ''
+        self.load_settings()
         self.output_file_display = qtw.QTextEdit()
         self.output_file_display.resize(1000, 500)
         self.dynamic_font = self.font()
@@ -62,7 +65,7 @@ class PisgahGui(qtw.QWidget):
     def create_config_button(self):
         config = qtw.QPushButton('Choose where to save output files by default', self)
         config.setObjectName('config')
-        config.clicked.connect(self.write_settings)
+        config.clicked.connect(self.update_settings)
 
     # Dynamically adjusts the size of all window elements as the window is resized
     def resizeEvent(self, event):
@@ -115,9 +118,9 @@ class PisgahGui(qtw.QWidget):
     # Checks to see if the specified output file already exists. If so, creates a dialog prompting the user about what
     # to do. Otherwise initiates generation of the output file.
     def on_submit(self):
-        output_file_path = self.findChild(qtw.QLineEdit, 'textbox').text()
-        if output_file_path:
-            self.output_file_path = output_file_path
+        output_file_name = self.findChild(qtw.QLineEdit, 'textbox').text()
+        if output_file_name:
+            self.output_file_path = os.path.join(self.output_file_dir, output_file_name)
         else:
             self.output_file_path = self.default_output_file_path
         while os.path.exists(self.output_file_path + '.txt'):
@@ -141,14 +144,17 @@ class PisgahGui(qtw.QWidget):
             self.output_file_display.show()
 
     # Reads settings from the settings object
-    def read_settings(self):
-        return QSettings('CyborgOctopus', 'Pisgah Legal Services PDF GUI').value('dir')
+    def load_settings(self):
+        self.output_file_dir = str(QSettings('CyborgOctopus', 'Pisgah Legal Services PDF GUI').value('dir'))
+        self.default_output_file_path = os.path.join(self.output_file_dir, self.default_output_file_name)
+        print(self.output_file_dir)
 
-    # Creates and saves default save directory settings
-    def write_settings(self):
+    # Creates and saves default save directory settings, then sets them as the default
+    def update_settings(self):
         dir_selector = qtw.QFileDialog(self)
         #dir_selector.setOption(Sh)
         directory = dir_selector.getExistingDirectory(self)
 
         settings = QSettings('CyborgOctopus', 'Pisgah Legal Services PDF GUI')
         settings.setValue('dir', directory)
+        self.load_settings()
