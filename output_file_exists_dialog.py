@@ -1,5 +1,6 @@
 import os
 from PyQt5.QtWidgets import QDialog, QLineEdit, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
+from mouse_hover_detecting_button import MouseHoverDetectingButton
 
 
 # Class for a dialog prompting the user on what to do if a specified output file already exists
@@ -19,8 +20,9 @@ class OutputFileExistsDialog(QDialog):
 
         # Create UI elements
         self.create_label()
-        self.create_textbox()
-        self.create_buttons()
+        self.create_replace()
+        self.create_rename()
+        self.create_cancel()
 
     def create_label(self):
         label = QLabel()
@@ -29,25 +31,35 @@ class OutputFileExistsDialog(QDialog):
         label.adjustSize()
         self.layout().addWidget(label)
 
-    def create_textbox(self):
-        textbox = QLineEdit()
-        textbox.setPlaceholderText(os.path.basename(self.path))
-        textbox.setObjectName('textbox')
-        self.layout().addWidget(textbox)
-
-    def create_buttons(self):
-        cancel_button = QPushButton('Cancel')
-        cancel_button.clicked.connect(lambda: self.done(0))
-        replace_button = QPushButton('Replace')
+    def create_replace(self):
+        replace_button = MouseHoverDetectingButton('Replace')
         replace_button.clicked.connect(lambda: self.done(1))
+        replace_button.mouse_entered.connect(self.on_replace_mouse_entry)
+        replace_button.mouse_exited.connect(self.on_replace_mouse_exit)
+        self.layout().addWidget(replace_button)
+
+    def create_rename(self):
+        rename_label = QLabel()
+        rename_label.setText('Rename to:')
+        rename_label.adjustSize()
+        rename_label.setObjectName('rename label')
+
+        rename_textbox = QLineEdit()
+        rename_textbox.setPlaceholderText(os.path.basename(self.path))
+        rename_textbox.setObjectName('rename textbox')
+
         rename_button = QPushButton('Rename')
         rename_button.clicked.connect(self.on_rename_clicked)
+        rename_button.setObjectName('rename button')
 
-        hbox = QHBoxLayout()
-        hbox.addWidget(replace_button)
-        hbox.addWidget(rename_button)
-        hbox.addWidget(cancel_button)
-        self.layout().addLayout(hbox)
+        self.layout().addWidget(rename_label)
+        self.layout().addWidget(rename_textbox)
+        self.layout().addWidget(rename_button)
+
+    def create_cancel(self):
+        cancel_button = QPushButton('Cancel')
+        cancel_button.clicked.connect(lambda: self.done(0))
+        self.layout().addWidget(cancel_button)
 
     #def resizeEvent(self, event):
      #   self.resize_textbox()
@@ -57,12 +69,22 @@ class OutputFileExistsDialog(QDialog):
         textbox = self.findChild(QLineEdit, 'textbox')
         #textbox.setGeometry(10, 10, 100, 100)
 
+    def on_replace_mouse_entry(self):
+        self.findChild(QLabel, 'rename label').setEnabled(False)
+        self.findChild(QLineEdit, 'rename textbox').setEnabled(False)
+        self.findChild(QPushButton, 'rename button').setEnabled(False)
+
+    def on_replace_mouse_exit(self):
+        self.findChild(QLabel, 'rename label').setEnabled(True)
+        self.findChild(QLineEdit, 'rename textbox').setEnabled(True)
+        self.findChild(QPushButton, 'rename button').setEnabled(True)
+
     def on_rename_clicked(self):
         self.get_path_from_user_input()
         self.done(2)
 
     def get_path_from_user_input(self):
-        file_name = self.findChild(QLineEdit, 'textbox').text()
+        file_name = self.findChild(QLineEdit, 'rename textbox').text()
         if file_name:
             self.path = os.path.join(self.output_file_dir, file_name)
 

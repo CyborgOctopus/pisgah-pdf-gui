@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QPushButton, QFileDialog
 
 
 # Custom button class which accepts drag and drop events and clicks
-class Button(QPushButton):
+class FileSelectionButton(QPushButton):
     file_selected = pyqtSignal()
 
     def __init__(self, default_text, parent=None):
