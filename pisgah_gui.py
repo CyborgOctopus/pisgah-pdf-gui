@@ -1,4 +1,3 @@
-import math
 import os
 from PyQt5.QtCore import QSettings, Qt
 import PyQt5.QtWidgets as qtw
@@ -31,10 +30,10 @@ class PisgahGui(qtw.QWidget):
         #self.setBaseSize(750, 650)
 
         # Create UI elements
+        self.create_save_directory_config()
         self.create_file_selection_buttons()
         self.create_textbox()
         self.create_submit_button()
-        self.create_save_directory_config()
 
         # Display
         self.show()
